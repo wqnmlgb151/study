@@ -21,17 +21,12 @@ P2P	无中心服务器，设备间直接通信
 
 缺点：安全性差、节点直接暴露、管理困难
 
-![](https://note.youdao.com/yws/res/c/WEBRESOURCEdd5add0836866e31befdeada0e1eea8c)![](https://note.youdao.com/yws/res/3/WEBRESOURCE4c545d5175f551d81339426b154bae33)网站必需五大件：域名 服务器 前端 后端 中间件
-
-![](https://note.youdao.com/yws/res/d/WEBRESOURCEc5601a12cb9a3578033e0bf274b4605d)![](https://note.youdao.com/yws/res/2/WEBRESOURCE020c24e392353a4df8fa1a5ef5d29032)
+网站必需五大件：域名 服务器 前端 后端 中间件
 
 大型服务器应能7*24h运行
 
-![](https://note.youdao.com/yws/res/3/WEBRESOURCE1b004284c4409a7f51cab8447f847893)
-
 常用中间件：APACHE（阿帕奇)、Nginx、Tomcat、IIS
 
-![](https://note.youdao.com/yws/res/6/WEBRESOURCE87b00897a1a95b79d1e189b64f14aba6)![](https://note.youdao.com/yws/res/6/WEBRESOURCE2f81e9639d7e69f97682f0e6efbd4a66)![](https://note.youdao.com/yws/res/1/WEBRESOURCE62a8e53cc5f2f1805d1210fe436133b1)
 
 域名  ：[www.baidu.com](http://www.baidu.com)   对应IP：14.119.104.154
 
@@ -41,14 +36,10 @@ P2P	无中心服务器，设备间直接通信
 
 域名好记且具有商业化价值
 
-![](https://note.youdao.com/yws/res/5/WEBRESOURCEacd7c379a84c991d4bd4443fc077c755)
-
 ## 2.操作系统
 window、Linux（命令提示符、但可以图形可视化）
 
 区别：内核不同
-
-![](https://note.youdao.com/yws/res/a/WEBRESOURCEd03e0a218c2f3e1f87d721e8d41e7a1a)![](https://note.youdao.com/yws/res/5/WEBRESOURCEc2310f2a86d98d196e58d1d3c9eda8a5)![](https://note.youdao.com/yws/res/3/WEBRESOURCE04cb5f829e617ebf2e90607f18508083)
 
 ## 3.安装VMware
 VMware 虚拟机 可在一台电脑上运行多个电脑
