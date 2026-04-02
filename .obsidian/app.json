@@ -3,5 +3,6 @@
   "newLinkFormat": "relative",
   "newFileLocation": "current",
   "attachmentFolderPath": "./assets",
-  "alwaysUpdateLinks": true
+  "alwaysUpdateLinks": true,
+  "showUnsupportedFiles": true
 }
