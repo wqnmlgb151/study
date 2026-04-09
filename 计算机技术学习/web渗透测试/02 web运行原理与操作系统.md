@@ -6,7 +6,8 @@ http协议
 - 浏览器/服务器（B/S）例如：百度   
 - P2P结构  例如：cs
 
-![](https://note.youdao.com/yws/res/3/WEBRESOURCE2a931c8179c3bf8bcf8f7750f2c9fa33)C/S	需要安装客户端软件，客户端与服务器直接通信
+![](https://note.youdao.com/yws/res/3/WEBRESOURCE2a931c8179c3bf8bcf8f7750f2c9fa33)
+C/S	需要安装客户端软件，客户端与服务器直接通信
 
 优点：交互体验好（可离线部分功能）、速度快
 
