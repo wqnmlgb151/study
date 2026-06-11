@@ -49,7 +49,6 @@
 │   ├── 刷题/
 │   └── 智能计算平台应用开发/
 ├── .obsidian/              —— Obsidian 配置（插件、工作区）
-├── CLAUDE.md               —— Claude Code 指引
 └── Claude-Code-新手指南.md  —— Claude Code 使用教程
 ```
 
