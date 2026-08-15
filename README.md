@@ -64,4 +64,4 @@
 - 附件存放于各笔记对应的 `assets/笔记名/` 子目录（图片、PDF、压缩包等）
 - 代码块标注语言类型以便语法高亮
 - 提交信息格式：`vault backup: YYYY-MM-DD HH:mm:ss`（由 obsidian-git 自动生成）
-- MOC 索引：各方向目录内的 `MOC.md` 是方向入口；新笔记完成后需挂入对应 MOC 并补充「相关笔记」双向链接
+- MOC 索引：各方向目录内的 `MOC.md` 是方向入口；新笔记完成后需挂入对应 MOC 并补充「相关笔记」区块（统一使用 Markdown 相对链接，GitHub 与 Obsidian 通用）
