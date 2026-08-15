@@ -293,7 +293,7 @@ def infer(arr: list):
 + 量化示例（ONNX Runtime quantization 工具）：
 
 ```plain
-python -m onnxruntime.tools.transformers.optimizer_cli --input model.onnx --output model_opt.onnx --precision fp16
+python -m onnxruntime.transformers.optimizer --input model.onnx --output model_opt.onnx --float16
 # 或者使用 quantize_dynamic
 from onnxruntime.quantization import quantize_dynamic, QuantType
 quantize_dynamic("model.onnx", "model.quant.onnx", weight_type=QuantType.QInt8)
@@ -392,6 +392,7 @@ trivy image --severity HIGH,CRITICAL ghcr.io/myorg/myapp:latest
 
 ```python
 # pandas 示例
+import hashlib
 df['email_hash'] = df['email'].apply(lambda x: hashlib.sha256(x.encode()).hexdigest())
 df = df.drop(columns=['email'])
 ```
