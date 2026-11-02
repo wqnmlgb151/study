@@ -1,42 +1,46 @@
-**生成日期：2025-10-09**  
+# 华为智能计算平台中级知识点（AI 生成）
+
+**生成日期：2025-10-09**
 
 > 本文为 AI 生成的补充学习资料，包含命令和配置片段，不能视为官方考纲或已完整复现的实验手册。示例中的主机、设备、文件、应用及模型需自行准备；执行前核对目标版本和前提。
 >
 > 文字与示例核对日期：2026-10-30。这里只修改已确认的问题及必要的适用条件，不代表所有外部服务和硬件场景均经过实测。
->
 
 ---
 
-## 模块 A — 平台与硬件基础（详尽）
-### 1. BMC / IPMI 常用操作（示例使用 ipmitool）
-+ 查询 BMC 信息：
+## 1.模块 A — 平台与硬件基础（详尽）
 
-```plain
+### 1.1 BMC / IPMI 常用操作（示例使用 ipmitool）
+
+- 查询 BMC 信息：
+
+```bash
 ipmitool -I lanplus -H 192.168.1.100 -U admin -P password chassis status
 ipmitool -I lanplus -H 192.168.1.100 -U admin -P password sdr elist
 ```
 
-+ 远程开机 / 关机 / 重启：
+- 远程开机 / 关机 / 重启：
 
-```plain
+```bash
 ipmitool -I lanplus -H 192.168.1.100 -U admin -P password chassis power on
 ipmitool -I lanplus -H 192.168.1.100 -U admin -P password chassis power off
 ipmitool -I lanplus -H 192.168.1.100 -U admin -P password chassis power cycle
 ```
 
-+ 查看远程控制台（SOL）：
+- 查看远程控制台（SOL）：
 
-```plain
+```bash
 ipmitool -I lanplus -H 192.168.1.100 -U admin -P password sol activate
 # 退出：~.
 ```
 
-+ 实务提示：BMC 密码默认需要更改，限制公网可达性；固件升级必须在维护窗口并保留回退方案。
+- 实务提示：BMC 密码默认需要更改，限制公网可达性；固件升级必须在维护窗口并保留回退方案。
 
-### 2. RAID 与 LVM 操作（实战步骤）
-+ 创建软件 RAID1（仅使用已确认可清空的实验磁盘；下面的建阵列和格式化操作会改变磁盘数据）：
+### 1.2 RAID 与 LVM 操作（实战步骤）
 
-```plain
+- 创建软件 RAID1（仅使用已确认可清空的实验磁盘；下面的建阵列和格式化操作会改变磁盘数据）：
+
+```bash
 # 假设 /dev/sdb 和 /dev/sdc
 mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb /dev/sdc
 mkfs.xfs /dev/md0
@@ -46,9 +50,9 @@ mount /dev/md0 /data
 mdadm --detail --scan >> /etc/mdadm.conf
 ```
 
-+ LVM 示例（独立使用 /dev/sdd，并非接在上一例 /dev/md0 上；同样需要可清空的实验磁盘）：
+- LVM 示例（独立使用 /dev/sdd，并非接在上一例 /dev/md0 上；同样需要可清空的实验磁盘）：
 
-```plain
+```bash
 pvcreate /dev/sdd
 vgcreate vg_data /dev/sdd
 lvcreate -n lv_data -L 100G vg_data
@@ -57,15 +61,16 @@ mkdir /mnt/data2
 mount /dev/vg_data/lv_data /mnt/data2
 ```
 
-+ 扩容逻辑卷（前提：卷组仍有至少 50G 可用空间；XFS 需已挂载）：
+- 扩容逻辑卷（前提：卷组仍有至少 50G 可用空间；XFS 需已挂载）：
 
-```plain
+```bash
 lvextend -L +50G /dev/vg_data/lv_data
 xfs_growfs /mnt/data2    # 如果是 xfs
 ```
 
-### 3. 常见硬件故障判断（示例流程）
-+ 现象：服务器无法开机 → 步骤：
+### 1.3 常见硬件故障判断（示例流程）
+
+- 现象：服务器无法开机 → 步骤：
     1. 通过 BMC 查看电源/风扇/温度告警：`ipmitool sdr elist`。
     2. 检查前面板/电源指示灯、错误 LED。
     3. 若 CPU/内存异常，做单条内存替换/插槽交换以排除。
@@ -73,57 +78,61 @@ xfs_growfs /mnt/data2    # 如果是 xfs
 
 ---
 
-## 模块 B — 操作系统与系统管理（详尽）
-### 1. 日志与服务排查实战（示例）
-+ 查看服务日志（近 30 分钟）：
+## 2.模块 B — 操作系统与系统管理（详尽）
 
-```plain
+### 2.1 日志与服务排查实战（示例）
+
+- 查看服务日志（近 30 分钟）：
+
+```bash
 journalctl -u my-service --since "30 minutes ago" --no-pager
 ```
 
-+ 重启后排查上次启动的内核日志（需要日志仍被保留）：
+- 重启后排查上次启动的内核日志（需要日志仍被保留）：
 
-```plain
+```bash
 journalctl -k -b -1 -n 200 --no-pager
 # dmesg 通常只反映当前启动的内核环形缓冲区，不能替代上次启动日志。
 dmesg | tail -n 200
 ```
 
-+ 示例：systemctl 无法启动服务
+- 示例：systemctl 无法启动服务
 
-```plain
+```bash
 systemctl start my-service
 systemctl status my-service -l
 journalctl -u my-service -n 200 --no-pager
 # 若权限问题，查看 /etc/systemd/system/my-service.service 的权限与 ExecStart 路径
 ```
 
-### 2. 网络排查命令与用法
-+ 查看 IP/路由：
+### 2.2 网络排查命令与用法
 
-```plain
+- 查看 IP/路由：
+
+```bash
 ip addr show
 ip route show
 ```
 
-+ 查看端口监听：
+- 查看端口监听：
 
-```plain
+```bash
 ss -tunlp | grep 8080
 ```
 
-+ 抓包定位（捕获到文件再分析）：
+- 抓包定位（捕获到文件再分析）：
 
-```plain
+```bash
 tcpdump -i eth0 host 10.0.0.5 and port 80 -w /tmp/capture.pcap
 # 查看抓包（简略）：
 tcpdump -r /tmp/capture.pcap -n -tt
 ```
 
-### 3. 安全实务（SSH 密钥与限定登陆）
-+ 生成密钥并部署：
+### 2.3 安全实务（SSH 密钥与限定登陆）
 
-```plain
+- 生成密钥并部署：
+
+```bash
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa_exam
 ssh-copy-id -i ~/.ssh/id_rsa_exam.pub user@target
 # 先用指定的非默认文件名验证密钥登录，保留现有会话。
@@ -145,8 +154,10 @@ sudo systemctl reload sshd
 
 ---
 
-## 模块 C — 虚拟化与容器（详尽）
-### 1. Dockerfile 示例（最佳实践）
+## 3.模块 C — 虚拟化与容器（详尽）
+
+### 3.1 Dockerfile 示例（最佳实践）
+
 ```dockerfile
 # 多阶段构建示例：构建 Python 应用并只复制运行时
 FROM python:3.11-slim as builder
@@ -167,16 +178,17 @@ ENV PYTHONUNBUFFERED=1
 CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:8080", "--workers", "2"]
 ```
 
-+ **前提**：requirements.txt 包含 gunicorn 等依赖，app:app 是可用的 WSGI 应用。复制整个虚拟环境可同时保留包和 gunicorn 启动脚本；仅复制 site-packages 会漏掉控制台入口。原生扩展需要的系统动态库仍需在运行镜像安装，两个阶段应保持兼容的基础环境。
+- **前提**：requirements.txt 包含 gunicorn 等依赖，app:app 是可用的 WSGI 应用。复制整个虚拟环境可同时保留包和 gunicorn 启动脚本；仅复制 site-packages 会漏掉控制台入口。原生扩展需要的系统动态库仍需在运行镜像安装，两个阶段应保持兼容的基础环境。
 
-+ 构建并运行：
+- 构建并运行：
 
-```plain
+```bash
 docker build -t myapp:1.0 .
 docker run -d --name myapp -p 8080:8080 myapp:1.0
 ```
 
-### 2. Kubernetes 常用 YAML 示例（Deployment + Service）
+### 3.2 Kubernetes 常用 YAML 示例（Deployment + Service）
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -217,19 +229,20 @@ spec:
   type: ClusterIP
 ```
 
-+ **部署前提**：集群节点可获得 myapp:1.0 镜像；仅在本机 docker build 不代表其他节点能拉取。应用需实际提供 /health 且返回成功状态，否则 readiness 检查不会通过。
+- **部署前提**：集群节点可获得 myapp:1.0 镜像；仅在本机 docker build 不代表其他节点能拉取。应用需实际提供 /health 且返回成功状态，否则 readiness 检查不会通过。
 
-+ 常用命令：
+- 常用命令：
 
-```plain
+```bash
 kubectl apply -f myapp.yaml
 kubectl get pods -o wide
 kubectl logs deployment/myapp
 kubectl describe pod <pod-name>
 ```
 
-### 3. 排查常见 Pod 问题
-+ CrashLoopBackOff 排查流程：
+### 3.3 排查常见 Pod 问题
+
+- CrashLoopBackOff 排查流程：
     1. 查看日志：`kubectl logs <pod> --previous`
     2. 查看事件：`kubectl describe pod <pod>`
     3. 检查 liveness／startup 是否连续失败而触发重启；readiness 失败本身只影响就绪状态及服务流量，不会触发容器重启。
@@ -237,8 +250,10 @@ kubectl describe pod <pod-name>
 
 ---
 
-## 模块 D — 数据预处理与工程化（详尽）
-### 1. Pandas 读大文件（分块）示例
+## 4.模块 D — 数据预处理与工程化（详尽）
+
+### 4.1 Pandas 读大文件（分块）示例
+
 ```python
 import pandas as pd
 
@@ -253,14 +268,15 @@ for i, df in enumerate(chunks):
 
 写 Parquet 还需要兼容的 pyarrow／fastparquet 引擎。若需全局去重，应另行维护跨块状态或交给数据库／分布式处理实现，不能把分块内去重当作全量去重。
 
-### 2. 缺失值处理范例（实务步骤）
-+ 检查缺失值：
+### 4.2 缺失值处理范例（实务步骤）
 
-```plain
+- 检查缺失值：
+
+```python
 df.isnull().sum()
 ```
 
-+ 简单策略：
+- 简单策略：
     - 少量缺失 → 删除（`df.dropna()`）
     - 数值列 → 使用均值/中位数填充（`df['x'].fillna(df['x'].median())`）
     - 类别列 → 使用 `mode` 或新增类别 `unknown`
@@ -269,10 +285,12 @@ df.isnull().sum()
 
 ---
 
-## 模块 E — 模型训练与部署（详尽）
-### 1. PyTorch 保存与导出到 ONNX（示例）
+## 5.模块 E — 模型训练与部署（详尽）
+
+### 5.1 PyTorch 保存与导出到 ONNX（示例）
 
 以下保留 **legacy 导出器**示例，适用于提供 dynamo 参数的 PyTorch 版本（如 2.6 及后续仍支持 legacy 路径的版本）。PyTorch 2.9 起默认 dynamo=True，不能混淆新旧导出器；新导出器按官方说明选取 opset 和依赖，不把 opset 12 当作任意模型的通用设置。
+
 ```python
 # model: 已训练好的 PyTorch 模型
 import torch
@@ -286,7 +304,7 @@ torch.onnx.export(
 # 更早且不接受 dynamo 参数的版本需删除该参数，并按其文档核对。
 ```
 
-+ 验证 ONNX 模型（使用 onnxruntime）：
+- 验证 ONNX 模型（使用 onnxruntime）：
 
 ```python
 import onnxruntime as ort
@@ -294,7 +312,8 @@ sess = ort.InferenceSession("model.onnx")
 res = sess.run(None, {"input": dummy_input.numpy()})
 ```
 
-### 2. TensorFlow SavedModel 导出（示例）
+### 5.2 TensorFlow SavedModel 导出（示例）
+
 ```python
 # Keras 3，使用 TensorFlow 后端并且 model 已构建。
 model.export("saved_model_dir")
@@ -308,7 +327,8 @@ model.export("saved_model_dir")
 model.save("saved_model_dir")
 ```
 
-### 3. 简单推理服务（FastAPI + onnxruntime 示例）
+### 5.3 简单推理服务（FastAPI + onnxruntime 示例）
+
 ```python
 from fastapi import FastAPI
 import onnxruntime as ort
@@ -330,18 +350,19 @@ def infer(arr: list):
 
 此 FastAPI 示例使用 ASGI 服务，例如 `uvicorn app:app --host 0.0.0.0 --port 8080`（需安装 uvicorn），不能直接套用前面 WSGI 的 Gunicorn 默认入口。输入数组的形状、数据类型和模型路径需与导出模型一致；当前接口是教学片段，不含完整输入校验。
 
-### 4. 性能优化（实操建议）
-+ 使用批推理：在客户端合并请求，减少上下文切换。
-+ 使用 ONNX Runtime + TensorRT/FP16：在 GPU 上加速。
-+ 转换与量化需区分：FP16 转换不等同于 INT8 动态量化。下面第一条 CLI 针对适配的 Transformer 模型及工具版本，不是所有 ONNX 模型的通用优化命令；性能和精度都需对照评估。
+### 5.4 性能优化（实操建议）
 
-+ Transformer 优化／FP16 转换示例：
+- 使用批推理：在客户端合并请求，减少上下文切换。
+- 使用 ONNX Runtime + TensorRT/FP16：在 GPU 上加速。
+- 转换与量化需区分：FP16 转换不等同于 INT8 动态量化。下面第一条 CLI 针对适配的 Transformer 模型及工具版本，不是所有 ONNX 模型的通用优化命令；性能和精度都需对照评估。
 
-```plain
+- Transformer 优化／FP16 转换示例：
+
+```bash
 python -m onnxruntime.transformers.optimizer --input model.onnx --output model_opt.onnx --float16
 ```
 
-+ INT8 动态量化示例（只对支持的模型／算子和执行提供程序适用）：
+- INT8 动态量化示例（只对支持的模型／算子和执行提供程序适用）：
 
 ```python
 from onnxruntime.quantization import quantize_dynamic, QuantType
@@ -350,9 +371,11 @@ quantize_dynamic("model.onnx", "model.quant.onnx", weight_type=QuantType.QInt8)
 
 ---
 
-## 模块 F — 监控、故障恢复（详尽）
-### 1. Prometheus 抓取简单指标（Node exporter + Prometheus scrape config）
-+ prometheus.yml 示例：
+## 6.模块 F — 监控、故障恢复（详尽）
+
+### 6.1 Prometheus 抓取简单指标（Node exporter + Prometheus scrape config）
+
+- prometheus.yml 示例：
 
 ```yaml
 scrape_configs:
@@ -361,9 +384,9 @@ scrape_configs:
       - targets: ['node1:9100','node2:9100']
 ```
 
-+ 常用 PromQL 示例：
+- 常用 PromQL 示例：
 
-```plain
+```promql
 # 最近 5 分钟 CPU 非空闲时间比例，单位为 0—1；不是系统 load average。
 1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))
 # 按普通用户可用空间计算的文件系统使用比例，高于 85% 的序列。
@@ -372,19 +395,20 @@ scrape_configs:
 
 若需给表达式命名并持久记录，应在规则 YAML 中分别配置 record 和 expr，不使用 `指标名 = 表达式` 的查询赋值写法。文件系统查询还应按环境筛选挂载点，排除伪文件系统和容量为零的项。
 
-### 2. 备份示例（rsync 与数据库）
-+ 文件镜像同步（rsync 增量传输）：
+### 6.2 备份示例（rsync 与数据库）
 
-```plain
+- 文件镜像同步（rsync 增量传输）：
+
+```bash
 rsync -avz --delete /data/ backup.example.com:/backups/data/
 # --delete 会删除目标目录中源端已不存在的项；可先加 --dry-run 预览。
 ```
 
 该示例是镜像同步，不能单凭它保留误删前的历史版本。需要历史恢复点时，应另配快照／版本目录及保留策略，并核验恢复过程。
 
-+ MySQL 备份（逻辑备份）：
+- MySQL 备份（逻辑备份）：
 
-```plain
+```bash
 mysqldump -u root -p --single-transaction --routines --events --databases mydb > mydb.sql
 # 一致性主要针对 InnoDB 等事务表；不保证 MyISAM 等非事务表一致性。
 # 导出期间还应避免 ALTER TABLE、DROP TABLE 等会影响一致性或读取的 DDL。
@@ -392,8 +416,10 @@ mysqldump -u root -p --single-transaction --routines --events --databases mydb >
 
 ---
 
-## 模块 G — CI/CD 与自动化（详尽）
-### 1. GitHub Actions 简单工作流（Docker 构建并推送）
+## 7.模块 G — CI/CD 与自动化（详尽）
+
+### 7.1 GitHub Actions 简单工作流（Docker 构建并推送）
+
 ```yaml
 name: CI
 on:
@@ -421,7 +447,8 @@ jobs:
 
 示例使用 GitHub 托管的当前 Ubuntu runner；自托管 runner 需满足 checkout v6 的版本要求。GHCR 还受组织及已有包的访问设置约束；镜像命名空间需使用合法的小写名称，生产使用应核对并锁定动作提交版本。
 
-### 2. Ansible 批量替换配置示例
+### 7.2 Ansible 批量替换配置示例
+
 ```yaml
 - hosts: webservers
   become: true  # 修改 /etc 及重启系统服务需相应提权配置。
@@ -445,16 +472,19 @@ jobs:
 
 ---
 
-## 模块 H — 安全与合规（详尽）
-### 1. 镜像安全扫描（示例工具 Trivy）
-```plain
+## 8.模块 H — 安全与合规（详尽）
+
+### 8.1 镜像安全扫描（示例工具 Trivy）
+
+```bash
 trivy image --severity HIGH,CRITICAL ghcr.io/myorg/myapp:latest
 ```
 
-+ 报告结果后需要做依赖升级或替换不安全组件。
+- 报告结果后需要做依赖升级或替换不安全组件。
 
-### 2. 数据脱敏基本操作（示例）
-+ 删除或哈希化敏感列（哈希不自动等于匿名化，仍需评估关联和字典匹配风险）：
+### 8.2 数据脱敏基本操作（示例）
+
+- 删除或哈希化敏感列（哈希不自动等于匿名化，仍需评估关联和字典匹配风险）：
 
 ```python
 # pandas 示例；df 已存在。
@@ -469,22 +499,24 @@ df = df.drop(columns=['email'])
 
 ---
 
-## 常见考题应答模板（实务中速用）
-+ **故障排查题**：先写“现象（What）→ 影响范围（Who/How many）→ 立即缓解（Stop-gap）→ 根因排查步骤（Logs/资源/配置）→ 解决方案与预防措施”。
-+ **配置题**：给出步骤命令 + 验证命令 + 回滚命令（例如修改 systemd 单元则说明 `systemctl daemon-reload` 与 `systemctl restart`，并给出回滚配置文件的路径与恢复命令）。
+## 9.常见考题应答模板（实务中速用）
+
+- **故障排查题**：先写“现象（What）→ 影响范围（Who/How many）→ 立即缓解（Stop-gap）→ 根因排查步骤（Logs/资源/配置）→ 解决方案与预防措施”。
+- **配置题**：给出步骤命令 + 验证命令 + 回滚命令（例如修改 systemd 单元则说明 `systemctl daemon-reload` 与 `systemctl restart`，并给出回滚配置文件的路径与恢复命令）。
 
 ---
 
-## 练习任务（跟着做）
-1. 使用两块空盘创建 RAID1 -> 在上面创建 LVM -> 挂载并扩容。  
-2. 编写 Dockerfile，构建镜像并推送到本地 Registry。  
-3. 在 minikube 上部署上面给出的 Deployment，模拟 Pod CrashLoopBackOff（写一个启动脚本退出），并完成排查与修复。  
-4. 训练一个小模型，导出为 ONNX，写一个 FastAPI 推理接口并压测（ab 或 wrk）。  
+## 10.练习任务（跟着做）
+
+1. 使用两块空盘创建 RAID1 -> 在上面创建 LVM -> 挂载并扩容。
+2. 编写 Dockerfile，构建镜像并推送到本地 Registry。
+3. 在 minikube 上部署上面给出的 Deployment，模拟 Pod CrashLoopBackOff（写一个启动脚本退出），并完成排查与修复。
+4. 训练一个小模型，导出为 ONNX，写一个 FastAPI 推理接口并压测（ab 或 wrk）。
 5. 配置 Prometheus 抓取 Node Exporter，搭建 Grafana 面板显示 CPU/内存/磁盘和自定义应用指标。
 
 ---
 
-### 核对资料
+## 11.核对资料
 
 - [Docker 多阶段构建](https://docs.docker.com/build/building/multi-stage/)、[Kubernetes 探针](https://kubernetes.io/docs/concepts/workloads/pods/probes/) —— 运行依赖和探针行为。
 - [Keras 3 迁移](https://keras.io/guides/migrating_to_keras_3/)、[PyTorch ONNX 导出](https://docs.pytorch.org/docs/stable/onnx) —— 新旧导出接口。
@@ -493,7 +525,7 @@ df = df.drop(columns=['email'])
 - [rsync 手册](https://www.samba.org/ftp/rsync/rsync.1)、[MySQL mysqldump](https://dev.mysql.com/doc/refman/8.4/en/mysqldump.html)、[journalctl](https://www.freedesktop.org/software/systemd/man/latest/journalctl.html) —— 同步、备份一致性与日志范围。
 - [GitHub 镜像发布](https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images)、[checkout 说明](https://github.com/actions/checkout)、[pandas Parquet](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_parquet.html) —— 权限、runner 兼容及数据引擎依赖。
 
-## 9.相关笔记
+## 12.相关笔记
 
 - [MOC-智能计算平台应用开发](./MOC.md) —— 返回方向索引，查看学习路线与主题分组。
 - [1.人工智能与平台搭建](./1.人工智能与平台搭建.md) —— 基础：人工智能概念、开发环境与框架。
