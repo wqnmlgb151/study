@@ -2,9 +2,7 @@
 
 **生成日期：2025-10-09**
 
-> 本文为 AI 生成的补充学习资料，包含命令和配置片段，不能视为官方考纲或已完整复现的实验手册。示例中的主机、设备、文件、应用及模型需自行准备；执行前核对目标版本和前提。
->
-> 文字与示例核对日期：2026-10-30。这里只修改已确认的问题及必要的适用条件，不代表所有外部服务和硬件场景均经过实测。
+> 本文为 AI 生成的学习资料，涵盖平台运维、数据处理与模型部署示例。示例中的主机、设备、文件、应用及模型需自行准备，运行前确认版本与依赖；考核范围以官方考纲为准。
 
 ---
 
@@ -289,7 +287,7 @@ df.isnull().sum()
 
 ### 5.1 PyTorch 保存与导出到 ONNX（示例）
 
-以下保留 **legacy 导出器**示例，适用于提供 dynamo 参数的 PyTorch 版本（如 2.6 及后续仍支持 legacy 路径的版本）。PyTorch 2.9 起默认 dynamo=True，不能混淆新旧导出器；新导出器按官方说明选取 opset 和依赖，不把 opset 12 当作任意模型的通用设置。
+以下是 **legacy 导出器**示例，适用于提供 dynamo 参数的 PyTorch 版本（如 2.6 及后续仍支持 legacy 路径的版本）。PyTorch 2.9 起默认 dynamo=True，不能混淆新旧导出器；新导出器按官方说明选取 opset 和依赖，不把 opset 12 当作任意模型的通用设置。
 
 ```python
 # model: 已训练好的 PyTorch 模型
@@ -320,7 +318,7 @@ model.export("saved_model_dir")
 # 保存 Keras 原生可训练模型则用 model.save("model.keras")。
 ```
 
-旧版 TensorFlow 后端 Keras 2 中，以下写法可导出 SavedModel，作为历史用法保留；不能原样套用于 Keras 3：
+旧版 TensorFlow 后端 Keras 2 中，以下写法可导出 SavedModel；Keras 3 应使用对应的导出接口：
 
 ```python
 # Keras 2 的历史用法
@@ -518,7 +516,7 @@ df = df.drop(columns=['email'])
 
 ### 10.1 练习验收与课程回查
 
-> 以下是对现有练习的验收补充，属于学习设计；没有实际运行记录时，不能写成“部署成功”或“验证通过”。
+> 练习验收应记录环境版本、操作步骤、实际输出和验证结论，再与预期目标比较。
 
 | 练习 | 最少需要保留的结果 | 回查笔记 |
 | --- | --- | --- |
@@ -529,7 +527,7 @@ df = df.drop(columns=['email'])
 
 一条可复习的完整路线是：**确认环境 → 固定数据与规则 → 训练基线 → 独立评估 → 导出与接口核验 → 留存版本和恢复记录**。实际部署仍需按所选产品和版本调整；这些步骤不替代前文具体命令的前提说明。
 
-## 11.核对资料
+## 11.参考资料
 
 - [Docker 多阶段构建](https://docs.docker.com/build/building/multi-stage/)、[Kubernetes 探针](https://kubernetes.io/docs/concepts/workloads/pods/probes/) —— 运行依赖和探针行为。
 - [Keras 3 迁移](https://keras.io/guides/migrating_to_keras_3/)、[PyTorch ONNX 导出](https://docs.pytorch.org/docs/stable/onnx) —— 新旧导出接口。
