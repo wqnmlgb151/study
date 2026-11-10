@@ -1,6 +1,6 @@
 # Claude Code 新手指南
 
-> 适用版本：当前环境 (DeepSeek V4 Pro 后端 + Claude Code CLI)
+> 适用版本：Claude Code CLI
 > 更新日期：2026-05-24
 
 ---
