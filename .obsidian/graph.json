@@ -3,9 +3,9 @@
   "search": "",
   "showTags": false,
   "showAttachments": false,
-  "hideUnresolved": true,
+  "hideUnresolved": false,
   "showOrphans": true,
-  "collapse-color-groups": false,
+  "collapse-color-groups": true,
   "colorGroups": [
     {
       "query": "file:MOC OR file:README",
@@ -54,5 +54,5 @@
   "linkStrength": 1,
   "linkDistance": 250,
   "scale": 0.6590643192937061,
-  "close": true
+  "close": false
 }
